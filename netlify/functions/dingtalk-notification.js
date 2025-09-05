@@ -2,6 +2,46 @@
 const axios = require('axios');
 const crypto = require('crypto');
 
+// 频率限制 - 每分钟最多10次
+let requestTimestamps = [];
+const MAX_REQUESTS_PER_MINUTE = 10;
+
+// 脏话过滤列表
+const profanityList = [
+    '傻逼', 'sb', '神经病', '脑残', '白痴', '混蛋', '王八蛋', '操', '日', '妈的',
+    'fuck', 'shit', 'asshole', 'bitch', 'dick', 'pussy', 'cunt', 'bastard'
+];
+
+// 检查频率限制
+function checkRateLimit() {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000; // 1分钟前
+    
+    // 移除1分钟前的记录
+    requestTimestamps = requestTimestamps.filter(time => time > oneMinuteAgo);
+    
+    // 检查是否超过限制
+    if (requestTimestamps.length >= MAX_REQUESTS_PER_MINUTE) {
+        return false;
+    }
+    
+    // 添加当前时间戳
+    requestTimestamps.push(now);
+    return true;
+}
+
+// 检查脏话
+function checkProfanity(text) {
+    const lowerText = text.toLowerCase();
+    for (const word of profanityList) {
+        if (lowerText.includes(word.toLowerCase())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -9,6 +49,28 @@ exports.handler = async (event, context) => {
 
   try {
     const { message, phoneNumber } = JSON.parse(event.body);
+
+  // 检查频率限制
+        if (!checkRateLimit()) {
+            return {
+                statusCode: 429,
+                body: JSON.stringify({ 
+                    error: '发送频率过高，请稍后再试',
+                    detail: '每分钟最多发送10条消息!'
+                })
+            };
+        }
+        
+        // 检查脏话
+        if (checkProfanity(message)) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ 
+                    error: '消息包含不当内容',
+                    detail: '请文明用语!'
+                })
+            };
+        }
     
     // 从环境变量获取钉钉配置
     const DINGTALK_WEBHOOK = process.env.DINGTALK_WEBHOOK;
