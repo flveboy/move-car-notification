@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知车主挪车</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+       
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        background-color: #f8f9fa;
+        color: #333;
+      }
+       
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+       
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+       
+      .message-area {
+        margin-bottom: 20px;
+      }
+       
+      textarea {
+        width: 100%;
+        height: 120px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        resize: none;
+        font-size: 16px;
+        margin-bottom: 5px;
+      }
+       
+      .char-count {
+        text-align: right;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+       
+      .templates {
+        margin-bottom: 20px;
+      }
+       
+      .template-btn {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 8px 15px;
+        margin: 0 5px 5px 0;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+       
+      .template-btn:hover {
+        background: #e9ecef;
+      }
+       
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+      }
+       
+      .btn {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+       
+      .notify-btn {
+        background: #007bff;
+        color: white;
+      }
+       
+      .notify-btn:hover {
+        background: #0056b3;
+      }
+       
+      .notify-btn:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+      }
+       
+      .call-btn {
+        background: #28a745;
+        color: white;
+      }
+       
+      .call-btn:hover {
+        background: #218838;
+      }
+       
+      /* 模态框样式 */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1000;
+      }
+       
+      .modal-content {
+        position: relative;
+        background-color: white;
+        margin: 20% auto;
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 10px;
+        text-align: center;
+      }
+       
+      .modal-title {
+        margin-bottom: 15px;
+        font-size: 18px;
+        color: #2c3e50;
+      }
+       
+      .modal-phone {
+        font-size: 24px;
+        color: #007bff;
+        margin-bottom: 20px;
+      }
+       
+      .modal-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+       
+      .modal-btn {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+       
+      .confirm-btn {
+        background: #28a745;
+        color: white;
+      }
+       
+      .confirm-btn:hover {
+        background: #218838;
+      }
+       
+      .cancel-btn {
+        background: #dc3545;
+        color: white;
+      }
+       
+      .cancel-btn:hover {
+        background: #c82333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>通知车主挪车</h1>
+       
+      <div class="message-area">
+        <textarea id="messageInput" placeholder="请输入通知内容"></textarea>
+        <div id="charCount" class="char-count">0/200</div>
+      </div>
+       
+      <div class="templates">
+        <button class="template-btn">默认</button>
+        <button class="template-btn">礼貌</button>
+        <button class="template-btn">紧急</button>
+        <button class="template-btn">关窗提示</button>
+      </div>
+       
+      <div class="action-buttons">
+        <button id="notifyBtn" class="btn notify-btn">发送通知</button>
+        <button class="btn call-btn">拨打电话</button>
+      </div>
+    </div>
+ 
+    <!-- 拨打电话确认模态框 -->
+    <div id="callModal" class="modal">
+      <div class="modal-content">
+        <h2 class="modal-title">确认拨打车主电话？</h2>
+        <div id="modalPhoneNumber" class="modal-phone"></div>
+        <div class="modal-buttons">
+          <button class="modal-btn confirm-btn">确认拨打</button>
+          <button class="modal-btn cancel-btn">取消</button>
+        </div>
+      </div>
+    </div>
+ 
+    <script>
+      // 企业微信配置参数 - 需要替换为您的实际值
+      const CORP_ID = 'YOUR_CORP_ID'; // 企业ID
+      const AGENT_ID = 'YOUR_AGENT_ID'; // 应用AgentId
+      const AGENT_SECRET = 'YOUR_AGENT_SECRET'; // 应用Secret
+      const TO_USER = '@all'; // 接收消息的用户，@all表示企业内所有用户
+      
+      // 获取access_token的API地址
+      const TOKEN_URL = `https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${CORP_ID}&corpsecret=${AGENT_SECRET}`;
+      
+      // 发送消息的API地址
+      let SEND_URL = '';
+      
+      // 缓存access_token
+      let accessToken = '';
+      let tokenExpireTime = 0;
+      
+      const phoneNumber = 'xxxxx';
+
+      // 使用模板消息
+      function useTemplate(template) {
+        const messageInput = document.getElementById('messageInput');
+        messageInput.value = template;
+        updateCharCount();
+      }
+
+      // 更新字符计数
+      function updateCharCount() {
+        const messageInput = document.getElementById('messageInput');
+        const charCount = document.getElementById('charCount');
+        const notifyBtn = document.getElementById('notifyBtn');
+        const currentLength = messageInput.value.length;
+         
+        charCount.textContent = currentLength + '/200';
+         
+        // 启用/禁用发送按钮
+        notifyBtn.disabled = currentLength === 0 || currentLength > 200;
+         
+        // 改变字符计数颜色
+        if (currentLength > 200) {
+          charCount.style.color = '#dc3545';
+        } else {
+          charCount.style.color = '#666';
+        }
+      }
+
+      // 格式化电话号码显示
+      function formatPhoneNumber(phone) {
+        return phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      }
+      
+      // 获取企业微信access_token
+      async function getAccessToken() {
+        // 检查token是否还有效（提前5分钟过期）
+        if (accessToken && Date.now() < tokenExpireTime - 300000) {
+          return accessToken;
+        }
+        
+        try {
+          const response = await fetch(TOKEN_URL);
+          const data = await response.json();
+          
+          if (data.errcode === 0) {
+            accessToken = data.access_token;
+            tokenExpireTime = Date.now() + (data.expires_in * 1000);
+            SEND_URL = `https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${accessToken}`;
+            return accessToken;
+          } else {
+            throw new Error(`获取token失败: ${data.errmsg}`);
+          }
+        } catch (error) {
+          console.error('获取access_token错误:', error);
+          throw error;
+        }
+      }
+
+
+      // 调用Netlify Function发送通知
+      async function notifyOwner() {
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value.trim();
+         
+        if (!message) {
+          alert('请输入通知内容');
+          return;
+        }
+         
+        if (message.length > 200) {
+          alert('通知内容不能超过200字');
+          return;
+        }
+
+        const notifyBtn = document.getElementById('notifyBtn');
+        notifyBtn.disabled = true;
+        notifyBtn.textContent = '发送中...';
+
+        try {
+          const response = await fetch('/.netlify/functions/send-notification', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            console.log("通知发送成功", data);
+            notifyBtn.textContent = '发送成功';
+            messageInput.value = ''; // 清空输入框
+            updateCharCount(); // 更新字符计数
+            setTimeout(() => { 
+              notifyBtn.textContent = '发送通知'; 
+              notifyBtn.disabled = false; 
+            }, 2000);
+          } else {
+            console.error("发送通知失败", data);
+            notifyBtn.textContent = '发送失败';
+            alert(`发送失败: ${data.error}`);
+            setTimeout(() => { 
+              notifyBtn.textContent = '发送通知'; 
+              notifyBtn.disabled = false; 
+            }, 2000);
+          }
+        } catch (error) {
+          console.error("发送通知失败", error);
+          notifyBtn.textContent = '发送失败';
+          alert('发送通知失败，请检查控制台查看详情');
+          setTimeout(() => { 
+            notifyBtn.textContent = '发送通知'; 
+            notifyBtn.disabled = false; 
+          }, 2000);
+        }
+      }
+
+      // // 调用企业微信API发送通知
+      // async function notifyOwner() {
+      //   const messageInput = document.getElementById('messageInput');
+      //   const message = messageInput.value.trim();
+         
+      //   if (!message) {
+      //     alert('请输入通知内容');
+      //     return;
+      //   }
+         
+      //   if (message.length > 200) {
+      //     alert('通知内容不能超过200字');
+      //     return;
+      //   }
+
+      //   const notifyBtn = document.getElementById('notifyBtn');
+      //   notifyBtn.disabled = true;
+      //   notifyBtn.textContent = '发送中...';
+
+      //   try {
+      //     // 先获取access_token
+      //     await getAccessToken();
+          
+      //     // 发送消息
+      //     const response = await fetch(SEND_URL, {
+      //       method: "POST",
+      //       headers: { "Content-Type": "application/json" },
+      //       body: JSON.stringify({
+      //         "touser": TO_USER,
+      //         "msgtype": "text",
+      //         "agentid": AGENT_ID,
+      //         "text": {
+      //           "content": message
+      //         }
+      //       })
+      //     });
+          
+      //     const data = await response.json();
+          
+      //     if (data.errcode === 0) {
+      //       console.log("企业微信通知发送成功", data);
+      //       notifyBtn.textContent = '发送成功';
+      //       messageInput.value = ''; // 清空输入框
+      //       updateCharCount(); // 更新字符计数
+      //       setTimeout(() => { 
+      //         notifyBtn.textContent = '发送通知'; 
+      //         notifyBtn.disabled = false; 
+      //       }, 2000);
+      //     } else {
+      //       console.error("发送通知失败", data);
+      //       notifyBtn.textContent = '发送失败';
+      //       alert(`发送失败: ${data.errmsg}`);
+      //       setTimeout(() => { 
+      //         notifyBtn.textContent = '发送通知'; 
+      //         notifyBtn.disabled = false; 
+      //       }, 2000);
+      //     }
+      //   } catch (error) {
+      //     console.error("发送通知失败", error);
+      //     notifyBtn.textContent = '发送失败';
+      //     alert('发送通知失败，请检查控制台查看详情');
+      //     setTimeout(() => { 
+      //       notifyBtn.textContent = '发送通知'; 
+      //       notifyBtn.disabled = false; 
+      //     }, 2000);
+      //   }
+      // }
+
+      // 显示拨打电话的确认框
+      function showCallModal() {
+        const formattedNumber = formatPhoneNumber(phoneNumber);
+        document.getElementById('modalPhoneNumber').textContent = formattedNumber;
+        document.getElementById('callModal').style.display = 'block';
+      }
+
+      // 隐藏拨打电话的确认框
+      function hideCallModal() {
+        document.getElementById('callModal').style.display = 'none';
+      }
+
+      // 拨打车主电话
+      function callOwner() {
+        window.location.href = `tel:${phoneNumber}`;
+        hideCallModal();
+      }
+
+      // 页面加载完成后初始化
+      document.addEventListener('DOMContentLoaded', () => {
+        // 初始化事件监听
+        document.getElementById('notifyBtn').addEventListener('click', notifyOwner);
+        document.querySelector('.call-btn').addEventListener('click', showCallModal);
+        document.querySelector('.confirm-btn').addEventListener('click', callOwner);
+        document.querySelector('.cancel-btn').addEventListener('click', hideCallModal);
+        document.getElementById('messageInput').addEventListener('input', updateCharCount);
+        
+        // 模板按钮事件
+        const templateButtons = document.querySelectorAll('.template-btn');
+        templateButtons.forEach((btn, index) => {
+          btn.addEventListener('click', () => {
+            const templates = [
+              '您好，有人需要您挪车，请及时处理。',
+              '尊敬的先生/女士，您好！您的爱车挡住了我的去路，麻烦您挪一下车，非常感谢！',
+              '紧急挪车通知：您的车辆挡住了紧急通道，请立即前来挪车！',
+              '温馨提示：您的车窗未关，请注意车内财物安全。另外，您的车辆需要挪动一下，谢谢！'
+            ];
+            useTemplate(templates[index]);
+          });
+        });
+        
+        // 初始化默认消息
+        useTemplate('您好，有人需要您挪车，请及时处理。');
+      });
+
+      // 点击模态框外部关闭模态框
+      window.onclick = function(event) {
+        const modal = document.getElementById('callModal');
+        if (event.target === modal) {
+          hideCallModal();
+        }
+      }
+    </script>
+  </body>
+</html>
