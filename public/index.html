@@ -314,6 +314,52 @@
             police: '交警来了，赶紧挪车！请立即前来处理，以免被罚款！'
         };
 
+        // 频率限制 - 每分钟最多10次
+        let requestTimestamps = [];
+        const MAX_REQUESTS_PER_MINUTE = 10;
+        
+        // 脏话过滤列表
+        const profanityList = [
+            '傻逼', 'sb', '神经病', '脑残', '白痴', '混蛋', '王八蛋', '操', '日', '妈的',
+            'fuck', 'shit', 'asshole', 'bitch', 'dick', 'pussy', 'cunt', 'bastard'
+        ];
+
+        // 检查频率限制
+        function checkRateLimit() {
+            const now = Date.now();
+            const oneMinuteAgo = now - 60000; // 1分钟前
+            
+            // 移除1分钟前的记录
+            requestTimestamps = requestTimestamps.filter(time => time > oneMinuteAgo);
+            
+            // 检查是否超过限制
+            if (requestTimestamps.length >= MAX_REQUESTS_PER_MINUTE) {
+                const secondsLeft = Math.ceil((requestTimestamps[0] + 60000 - now) / 1000);
+                return {
+                    allowed: false,
+                    message: `发送频率过高，请等待${secondsLeft}秒后再试`
+                };
+            }
+            
+            // 添加当前时间戳
+            requestTimestamps.push(now);
+            return { allowed: true };
+        }
+
+        // 检查脏话
+        function checkProfanity(text) {
+            const lowerText = text.toLowerCase();
+            for (const word of profanityList) {
+                if (lowerText.includes(word.toLowerCase())) {
+                    return {
+                        hasProfanity: true,
+                        word: word
+                    };
+                }
+            }
+            return { hasProfanity: false };
+        }
+
         // 更新字符计数
         function updateCharCount() {
             const messageInput = document.getElementById('messageInput');
@@ -378,6 +424,20 @@
             
             if (message.length > 200) {
                 showStatusMessage('通知内容不能超过200字', false);
+                return;
+            }
+
+            // 检查脏话
+            const profanityCheck = checkProfanity(message);
+            if (profanityCheck.hasProfanity) {
+                showStatusMessage('请使用文明用语，不要包含不当词汇', false);
+                return;
+            }
+
+            // 检查频率限制
+            const rateLimitCheck = checkRateLimit();
+            if (!rateLimitCheck.allowed) {
+                showStatusMessage(rateLimitCheck.message, false);
                 return;
             }
 
