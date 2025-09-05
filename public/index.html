@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>扫码挪车服务</title>
-    <!-- 使用稳定版本的QRCode库 -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -267,7 +265,7 @@
                 <i class="fas fa-car"></i>
             </div>
             <h1>扫码挪车服务</h1>
-            <p class="description">通过钉钉通知车主挪车</p>
+            <p class="description">钉钉挪车</p>
         </header>
         
         <div class="content">
@@ -302,20 +300,8 @@
             </div>
         </div>
         
-        <div class="qrcode-section">
-            <div class="section-title">
-                <i class="fas fa-qrcode"></i>
-                扫码使用
-            </div>
-            <div id="qrcode"></div>
-            <div class="qrcode-instructions">
-                <p>使用手机扫描上方二维码，即可打开挪车通知页面。</p>
-                <p>将此二维码打印后放置在车内，他人需要您挪车时可直接扫码联系。</p>
-            </div>
-        </div>
-        
         <footer>
-            <p>© 2023 扫码挪车服务 | 钉钉通知</p>
+            <p>© 2025 扫码挪车服务 | 钉钉挪车</p>
         </footer>
     </div>
 
@@ -328,37 +314,6 @@
             police: '交警来了，赶紧挪车！请立即前来处理，以免被罚款！'
         };
 
-        // 初始化二维码
-        function generateQRCode() {
-            const url = window.location.href;
-            const qrcodeElement = document.getElementById('qrcode');
-            
-            // 清空之前的内容
-            qrcodeElement.innerHTML = '';
-            
-            try {
-                // 生成二维码 - 使用兼容性更好的方式
-                new QRCode(qrcodeElement, {
-                    text: url,
-                    width: 180,
-                    height: 180,
-                    colorDark: "#1565c0",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            } catch (error) {
-                console.error("生成二维码失败:", error);
-                // 备用方案：显示错误信息
-                qrcodeElement.innerHTML = `
-                    <div style="padding: 20px; color: #f44336;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
-                        <p>二维码生成失败</p>
-                        <p style="font-size: 12px; margin-top: 5px;">请刷新页面重试</p>
-                    </div>
-                `;
-            }
-        }
-        
         // 更新字符计数
         function updateCharCount() {
             const messageInput = document.getElementById('messageInput');
@@ -480,8 +435,6 @@
         
         // 初始化页面
         document.addEventListener('DOMContentLoaded', () => {
-            // 生成二维码
-            // generateQRCode();
             
             // 初始化消息输入监听
             const messageInput = document.getElementById('messageInput');
