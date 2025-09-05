@@ -1,8 +1,0 @@
-{
-  "name": "car-move-notification",
-  "version": "1.0.0",
-  "description": "A web app for notifying car owners to move their vehicles",
-  "dependencies": {
-    "axios": "^1.6.0"
-  }
-}
