@@ -1,4 +1,4 @@
-# 部署在netlify
+# main分支部署在netlify
 
 ## 现在配置的是钉钉的webhook，需要配置
   - DINGTALK_SECRET
@@ -15,7 +15,7 @@
       - AGENT_SECRET: 您的应用Secret
       - TO_USER: 接收消息的用户（可选，默认为@all）
 
-# 部署在 cloudflare
+# feature分支部署在 cloudflare
 ## 现在配置的是钉钉的webhook，需要配置
   - DINGTALK_SECRET
   - DINGTALK_WEBHOOK
