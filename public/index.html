@@ -548,7 +548,7 @@
             }
         }
         
-        // 调用Netlify Function发送钉钉通知
+        // 调用Function发送钉钉通知
         async function notifyOwner() {
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
@@ -583,7 +583,7 @@
 
             try {
                 // 实际发送请求 - 替换为您的Netlify Function端点
-                const response = await fetch('/.netlify/functions/dingtalk-notification', {
+                const response = await fetch('/functions/dingtalk-notification', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
