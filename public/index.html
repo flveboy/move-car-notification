@@ -583,7 +583,7 @@
 
             try {
                 // 实际发送请求 - 替换为您的Netlify Function端点
-                const response = await fetch('/functions/dingtalk-notification', {
+                const response = await fetch('/api/dingtalk-notification', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
