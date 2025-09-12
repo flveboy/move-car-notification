@@ -120,7 +120,7 @@ export async function onRequestPost(context) {
     const dingtalkMessage = {
       msgtype: "text",
       text: {
-        content: `🚗 挪车通知\n\n挪车原因：${message}\n\n通知时间：${formattedTime}\n\n请及时处理挪车请求！`
+        content: `🚗 挪车通知\n\n通知内容：${message}\n\n通知时间：${formattedTime}\n\n请及时处理挪车请求！`
       },
       at: {
         isAtAll: false
