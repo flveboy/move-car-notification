@@ -661,7 +661,7 @@
                 
                 if (response.ok && data.success) {
                     const serviceName = notificationType === 'dingtalk' ? '钉钉' : '企业微信';
-                    showStatusMessage(`${serviceName}通知发送成功！`, true);
+                    showStatusMessage(`${serviceName}通知发送成功！车主已收到通知，正在快马加鞭的赶来！`, true);
                     notifyBtn.innerHTML = '<i class="fas fa-check"></i> 发送成功';
                     
                     // 不重置消息内容，保持当前状态
