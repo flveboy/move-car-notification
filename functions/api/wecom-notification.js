@@ -18,10 +18,11 @@ export async function onRequestPost(context) {
     }
     
     // 解析请求体
-    let message;
+    let message,requestTime;
     try {
       const body = await request.json();
       message = body.message;
+      requestTime = body.requestTime || Date.now();
     } catch (e) {
       return new Response(JSON.stringify({ 
         error: '无效的请求体',
@@ -64,12 +65,14 @@ export async function onRequestPost(context) {
         }
       });
     }
+     // 格式化时间
+    const formattedTime = new Date(requestTime).toLocaleString('zh-CN');
     
     // 构建企业微信消息
     const wecomMessage = {
       msgtype: "text",
       text: {
-        content: `挪车通知: ${message}`
+        content: `🚗 挪车通知\n\n挪车原因：${message}\n\n通知时间：${formattedTime}\n\n请及时处理挪车请求！`
       }
     };
     
