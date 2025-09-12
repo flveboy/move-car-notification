@@ -652,7 +652,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ 
-                        message
+                        message，
+                        requestTime: Date.now() // 添加请求时间戳
                     })
                 });
                 
