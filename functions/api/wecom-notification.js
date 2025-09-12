@@ -66,7 +66,7 @@ export async function onRequestPost(context) {
       });
     }
      // 格式化时间
-    const formattedTime = new Date(requestTime).toLocaleString('zh-CN');
+    const formattedTime = new Date(requestTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
     
     // 构建企业微信消息
     const wecomMessage = {
