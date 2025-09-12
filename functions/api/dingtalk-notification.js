@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
     }
     
     // 解析请求体
-    let message, requestTime;
+    let message;
     try {
       const body = await request.json();
       message = body.message;
@@ -113,14 +113,12 @@ export async function onRequestPost(context) {
         });
       }
     }
-    // 格式化时间
-    const formattedTime = new Date(requestTime).toLocaleString('zh-CN');
     
     // 构建钉钉消息
     const dingtalkMessage = {
       msgtype: "text",
       text: {
-        content: `🚗 挪车通知\n\n挪车原因：${message}\n\n通知时间：${formattedTime}\n\n请及时处理挪车请求！`
+        content: `🚗 挪车通知：${message}`
       },
       at: {
         isAtAll: false
