@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
     }
     
     // 解析请求体
-    let message;
+    let message, requestTime;
     try {
       const body = await request.json();
       message = body.message;
@@ -113,6 +113,8 @@ export async function onRequestPost(context) {
         });
       }
     }
+     // 格式化时间
+    const formattedTime = new Date(requestTime).toLocaleString('zh-CN');
     
     // 构建钉钉消息
     const dingtalkMessage = {
