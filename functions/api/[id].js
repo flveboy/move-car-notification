@@ -68,40 +68,39 @@ export async function onRequestPut(context) {
       });
     }
 
-    // 开始事务
-    await env.DB.prepare("BEGIN TRANSACTION").run();
+    // 使用 D1 的事务 API
+    const result = await env.DB.transaction(async (tx) => {
+      // 更新车辆基本信息
+      await tx.prepare(
+        "UPDATE vehicles SET plate_number = ?, model = ?, color = ?, phone_number = ?, owner_name = ? WHERE id = ?"
+      ).bind(plate_number, model, color, phone_number, owner_name || null, id).run();
 
-    // 更新车辆基本信息
-    await env.DB.prepare(
-      "UPDATE vehicles SET plate_number = ?, model = ?, color = ?, phone_number = ?, owner_name = ? WHERE id = ?"
-    ).bind(plate_number, model, color, phone_number, owner_name || null, id).run();
+      // 删除现有通知配置
+      await tx.prepare(
+        "DELETE FROM notification_configs WHERE vehicle_id = ?"
+      ).bind(id).run();
 
-    // 删除现有通知配置
-    await env.DB.prepare(
-      "DELETE FROM notification_configs WHERE vehicle_id = ?"
-    ).bind(id).run();
+      // 插入新的通知配置
+      if (dingtalk_enabled) {
+        await tx.prepare(
+          "INSERT INTO notification_configs (vehicle_id, platform, enabled, webhook_url, keyword, sign_enabled, sign_secret) VALUES (?, 'dingtalk', 1, ?, ?, ?, ?)"
+        ).bind(id, dingtalk_webhook, dingtalk_keyword, dingtalk_sign_enabled ? 1 : 0, dingtalk_sign_secret || null).run();
+      }
 
-    // 插入新的通知配置
-    if (dingtalk_enabled) {
-      await env.DB.prepare(
-        "INSERT INTO notification_configs (vehicle_id, platform, enabled, webhook_url, keyword, sign_enabled, sign_secret) VALUES (?, 'dingtalk', 1, ?, ?, ?, ?)"
-      ).bind(id, dingtalk_webhook, dingtalk_keyword, dingtalk_sign_enabled ? 1 : 0, dingtalk_sign_secret || null).run();
-    }
+      if (wecom_enabled) {
+        await tx.prepare(
+          "INSERT INTO notification_configs (vehicle_id, platform, enabled, webhook_url) VALUES (?, 'wecom', 1, ?)"
+        ).bind(id, wecom_webhook).run();
+      }
 
-    if (wecom_enabled) {
-      await env.DB.prepare(
-        "INSERT INTO notification_configs (vehicle_id, platform, enabled, webhook_url) VALUES (?, 'wecom', 1, ?)"
-      ).bind(id, wecom_webhook).run();
-    }
+      if (email_enabled) {
+        await tx.prepare(
+          "INSERT INTO notification_configs (vehicle_id, platform, enabled, email_address) VALUES (?, 'email', 1, ?)"
+        ).bind(id, email_address).run();
+      }
 
-    if (email_enabled) {
-      await env.DB.prepare(
-        "INSERT INTO notification_configs (vehicle_id, platform, enabled, email_address) VALUES (?, 'email', 1, ?)"
-      ).bind(id, email_address).run();
-    }
-
-    // 提交事务
-    await env.DB.prepare("COMMIT").run();
+      return { success: true };
+    });
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -110,9 +109,6 @@ export async function onRequestPut(context) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    // 回滚事务
-    await env.DB.prepare("ROLLBACK").run();
-    
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -125,21 +121,20 @@ export async function onRequestDelete(context) {
   const { id } = params;
 
   try {
-    // 开始事务
-    await env.DB.prepare("BEGIN TRANSACTION").run();
+    // 使用 D1 的事务 API
+    const result = await env.DB.transaction(async (tx) => {
+      // 删除通知配置
+      await tx.prepare(
+        "DELETE FROM notification_configs WHERE vehicle_id = ?"
+      ).bind(id).run();
 
-    // 删除通知配置（由于外键约束，应该先删除相关配置）
-    await env.DB.prepare(
-      "DELETE FROM notification_configs WHERE vehicle_id = ?"
-    ).bind(id).run();
+      // 删除车辆
+      const deleteResult = await tx.prepare(
+        "DELETE FROM vehicles WHERE id = ?"
+      ).bind(id).run();
 
-    // 删除车辆
-    const result = await env.DB.prepare(
-      "DELETE FROM vehicles WHERE id = ?"
-    ).bind(id).run();
-
-    // 提交事务
-    await env.DB.prepare("COMMIT").run();
+      return deleteResult;
+    });
 
     if (result.success) {
       return new Response(JSON.stringify({ 
@@ -155,9 +150,6 @@ export async function onRequestDelete(context) {
       });
     }
   } catch (error) {
-    // 回滚事务
-    await env.DB.prepare("ROLLBACK").run();
-    
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
