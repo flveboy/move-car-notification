@@ -2,8 +2,8 @@
   "name": "car-move-service",
   "version": "1.0.0",
   "scripts": {
-    "build": "echo 'No build step needed'",
-    "dev": "wrangler pages dev --local --persist"
+   "dev": "wrangler pages dev public --local",
+    "deploy": "wrangler pages publish public"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3"
