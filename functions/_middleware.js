@@ -1,10 +1,30 @@
 export async function onRequest(context) {
   const { request, next, env } = context;
-  
-  // 跳过登录和公开路由的验证
-  if (request.url.includes('/api/login') || request.url.includes('/public/')) {
+
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // 公开路由，不需要认证
+  const publicRoutes = [
+    '/api/login',
+    '/api/register',
+    '/api/send-notification'
+    
+    , '/api/vehicles',
+    '/api/vehicle-stats',
+    '/api/notifications',
+    '/api/recent-notifications',
+    '/api/change-password'
+  ];
+
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
     return next();
   }
+  
+  // // 跳过登录和公开路由的验证
+  // if (request.url.includes('/api/login') || request.url.includes('/public/')) {
+  //   return next();
+  // }
   
   // 验证JWT令牌
   const authHeader = request.headers.get('Authorization');
