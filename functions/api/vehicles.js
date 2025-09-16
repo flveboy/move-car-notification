@@ -23,3 +23,85 @@ export async function onRequestGet(context) {
     });
   }
 }
+
+export async function onRequestPost(context) {
+  const { request, env } = context;
+  
+  try {
+    const data = await request.json();
+    const {
+      plate_number,
+      model,
+      color,
+      phone_number,
+      owner_name,
+      dingtalk_enabled,
+      dingtalk_webhook,
+      dingtalk_keyword,
+      dingtalk_sign_enabled,
+      dingtalk_sign_secret,
+      wecom_enabled,
+      wecom_webhook,
+      email_enabled,
+      email_address
+    } = data;
+
+    // 验证必填字段
+    if (!plate_number || !model || !color || !phone_number) {
+      return new Response(JSON.stringify({ error: "请填写所有必填字段" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // 生成唯一ID
+    const id = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+
+    // 开始事务
+    await env.DB.prepare("BEGIN TRANSACTION").run();
+
+    // 插入车辆基本信息
+    await env.DB.prepare(
+      "INSERT INTO vehicles (id, plate_number, model, color, phone_number, owner_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).bind(id, plate_number, model, color, phone_number, owner_name || null, createdAt).run();
+
+    // 插入通知配置
+    if (dingtalk_enabled) {
+      await env.DB.prepare(
+        "INSERT INTO notification_configs (vehicle_id, platform, enabled, webhook_url, keyword, sign_enabled, sign_secret) VALUES (?, 'dingtalk', 1, ?, ?, ?, ?)"
+      ).bind(id, dingtalk_webhook, dingtalk_keyword, dingtalk_sign_enabled ? 1 : 0, dingtalk_sign_secret || null).run();
+    }
+
+    if (wecom_enabled) {
+      await env.DB.prepare(
+        "INSERT INTO notification_configs (vehicle_id, platform, enabled, webhook_url) VALUES (?, 'wecom', 1, ?)"
+      ).bind(id, wecom_webhook).run();
+    }
+
+    if (email_enabled) {
+      await env.DB.prepare(
+        "INSERT INTO notification_configs (vehicle_id, platform, enabled, email_address) VALUES (?, 'email', 1, ?)"
+      ).bind(id, email_address).run();
+    }
+
+    // 提交事务
+    await env.DB.prepare("COMMIT").run();
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      id,
+      message: "车辆添加成功" 
+    }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    // 回滚事务
+    await env.DB.prepare("ROLLBACK").run();
+    
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
