@@ -636,74 +636,103 @@
                 let totalCount = 0;
                 let errorMessage = '';
 
-                // 发送钉钉通知（如果已配置）
-                if (webhookStatus.dingtalk) {
-                    totalCount++;
-                    try {
-                        const dingtalkResponse = await fetch('/api/dingtalk-notification', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ 
-                                message,
-                                requestTime: Date.now()
-                            })
-                        });
-                        
-                        const dingtalkData = await dingtalkResponse.json();
-                        if (dingtalkResponse.ok && dingtalkData.success) {
-                            successCount++;
-                        } else {
-                            errorMessage += `钉钉: ${dingtalkData.error || '未知错误'} `;
-                        }
-                    } catch (error) {
-                        errorMessage += '钉钉: 发送失败 ';
-                    }
+
+                const response = await fetch('/api/send-notification', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    vehicleId: currentCar.id, // 从URL参数获取的车辆ID
+                    message: message,
+                    requestTime: Date.now()
+                  })
+                });
+                const result = await response.json();
+                if (result.success) {
+                  showStatusMessage('通知发送成功！车主已收到通知，正在快马加鞭的赶来！', true);
+                } else {
+                  // 处理部分成功或全部失败的情况
+                  const errorMessages = result.results
+                    .filter(r => !r.success)
+                    .map(r => `${r.platform}: ${r.error}`)
+                    .join('; ');
+                  
+                  showStatusMessage(`发送失败: ${errorMessages}`, false);
                 }
+              } catch (error) {
+                console.error("发送通知失败", error);
+                showStatusMessage('发送通知失败，请检查网络连接', false);
+              }
+            
+                // 发送钉钉通知（如果已配置）
+                // if (webhookStatus.dingtalk) {
+                //     totalCount++;
+                //     try {
+                //         const dingtalkResponse = await fetch('/api/dingtalk-notification', {
+                //             method: 'POST',
+                //             headers: {
+                //                 'Content-Type': 'application/json'
+                //             },
+                //             body: JSON.stringify({ 
+                //                 message,
+                //                 requestTime: Date.now()
+                //             })
+                //         });
+                        
+                //         const dingtalkData = await dingtalkResponse.json();
+                //         if (dingtalkResponse.ok && dingtalkData.success) {
+                //             successCount++;
+                //         } else {
+                //             errorMessage += `钉钉: ${dingtalkData.error || '未知错误'} `;
+                //         }
+                //     } catch (error) {
+                //         errorMessage += '钉钉: 发送失败 ';
+                //     }
+                // }
 
                 // 发送企业微信通知（如果已配置）
-                if (webhookStatus.wecom) {
-                    totalCount++;
-                    try {
-                        const wecomResponse = await fetch('/api/wecom-notification', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ 
-                                message,
-                                requestTime: Date.now()
-                            })
-                        });
+                // if (webhookStatus.wecom) {
+                //     totalCount++;
+                //     try {
+                //         const wecomResponse = await fetch('/api/wecom-notification', {
+                //             method: 'POST',
+                //             headers: {
+                //                 'Content-Type': 'application/json'
+                //             },
+                //             body: JSON.stringify({ 
+                //                 message,
+                //                 requestTime: Date.now()
+                //             })
+                //         });
                         
-                        const wecomData = await wecomResponse.json();
-                        if (wecomResponse.ok && wecomData.success) {
-                            successCount++;
-                        } else {
-                            errorMessage += `企业微信: ${wecomData.error || '未知错误'} `;
-                        }
-                    } catch (error) {
-                        errorMessage += '企业微信: 发送失败 ';
-                    }
-                }
+                //         const wecomData = await wecomResponse.json();
+                //         if (wecomResponse.ok && wecomData.success) {
+                //             successCount++;
+                //         } else {
+                //             errorMessage += `企业微信: ${wecomData.error || '未知错误'} `;
+                //         }
+                //     } catch (error) {
+                //         errorMessage += '企业微信: 发送失败 ';
+                //     }
+                // }
 
                 // 处理结果
-                if (successCount === totalCount) {
-                    showStatusMessage('通知发送成功！车主已收到通知，正在快马加鞭的赶来！', true);
-                    notifyBtn.innerHTML = '<i class="fas fa-check"></i> 发送成功';
-                } else if (successCount > 0) {
-                    showStatusMessage(`部分通知发送成功: ${successCount}/${totalCount}。错误: ${errorMessage}`, false);
-                    notifyBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 部分成功';
-                } else {
-                    showStatusMessage(`发送失败: ${errorMessage}`, false);
-                    notifyBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 发送失败';
-                }
+                // if (successCount === totalCount) {
+                //     showStatusMessage('通知发送成功！车主已收到通知，正在快马加鞭的赶来！', true);
+                //     notifyBtn.innerHTML = '<i class="fas fa-check"></i> 发送成功';
+                // } else if (successCount > 0) {
+                //     showStatusMessage(`部分通知发送成功: ${successCount}/${totalCount}。错误: ${errorMessage}`, false);
+                //     notifyBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 部分成功';
+                // } else {
+                //     showStatusMessage(`发送失败: ${errorMessage}`, false);
+                //     notifyBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 发送失败';
+                // }
                 
-                setTimeout(() => {
-                    notifyBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送通知';
-                    notifyBtn.disabled = false;
-                }, 2000);
+                // setTimeout(() => {
+                //     notifyBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送通知';
+                //     notifyBtn.disabled = false;
+                // }, 2000);
             } catch (error) {
                 console.error("发送通知失败", error);
                 showStatusMessage('发送通知失败，请检查网络连接', false);
