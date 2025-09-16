@@ -2,3 +2,5 @@
 binding = "DB" # 在您的代码中使用env.DB访问
 database_name = "carnotify"
 database_id = "fab03491-5fad-4ec4-bf92-8c33a99e1365" # 从Cloudflare Dashboard获取
+
+pages_build_output_dir="./public"
