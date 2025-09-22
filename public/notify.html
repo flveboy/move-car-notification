@@ -305,6 +305,27 @@
             color: #616161;
         }
         
+        /* 加载样式 */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2196f3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 480px) {
             .action-buttons {
                 flex-direction: column;
@@ -332,11 +353,14 @@
         </header>
         
         <div class="content" id="mainContent">
-            <!-- 这里将通过JavaScript动态填充内容 -->
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>正在验证访问权限...</p>
+            </div>
         </div>
         
         <footer>
-            <p>© 2025 扫码挪车服务 | 多种通知方式</p>
+            <p>© 2025 扫码挪车服务 | 码上挪车</p>
         </footer>
     </div>
 
@@ -349,9 +373,6 @@
             police: '交警来了，赶紧挪车！请立即前来处理，以免被罚款！'
         };
 
-        // 预设的reqId（应与Cloudflare配置中的一致）
-        const VALID_REQ_ID = "8a7d6f"; // 示例reqId，实际使用时请替换
-        
         // 频率限制 - 每分钟最多10次
         let requestTimestamps = [];
         const MAX_REQUESTS_PER_MINUTE = 10;
@@ -685,9 +706,9 @@
         }
         
         // 验证reqId
-        function validateReqId() {
+        function validateReqId(validReqId) {
             const reqId = getQueryParam('reqId');
-            return reqId === VALID_REQ_ID;
+            return reqId === validReqId;
         }
         
         // 显示验证错误页面
@@ -811,13 +832,49 @@
             useTemplate('default');
         }
         
+        // 从服务器获取有效的reqId
+        async function fetchValidReqId() {
+            try {
+                const response = await fetch('/api/valid-reqid');
+                const data = await response.json();
+                
+                if (response.ok && data.validReqId) {
+                    return data.validReqId;
+                } else {
+                    console.error("获取reqId失败", data);
+                    throw new Error('无法获取有效的reqId');
+                }
+            } catch (error) {
+                console.error("获取reqId失败", error);
+                throw error;
+            }
+        }
+        
         // 初始化页面
-        document.addEventListener('DOMContentLoaded', () => {
-            // 验证reqId
-            if (validateReqId()) {
-                showMainApp();
-            } else {
-                showValidationError();
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 从服务器获取有效的reqId
+                const validReqId = await fetchValidReqId();
+                
+                // 验证reqId
+                if (validateReqId(validReqId)) {
+                    showMainApp();
+                } else {
+                    showValidationError();
+                }
+            } catch (error) {
+                console.error("初始化失败", error);
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="validation-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h2>系统错误</h2>
+                        <p>无法验证访问权限，请稍后再试。</p>
+                        <button class="btn notify-btn" onclick="location.reload()">
+                            <i class="fas fa-sync-alt"></i> 重试
+                        </button>
+                    </div>
+                `;
             }
         });
     </script>
