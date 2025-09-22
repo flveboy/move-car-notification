@@ -658,7 +658,7 @@
                     showStatusMessage(`${serviceName}通知发送成功！车主已收到通知，正在快马加鞭的赶来！`, true);
                     
                     if (notificationType === 'dingtalk') {
-                        dingtalkBtn.innerHTML = '<i class="fab fa-paper-plane"></i> 发送成功';
+                        dingtalkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送成功';
                     } else {
                         wecomBtn.innerHTML = '<i class="fas fa-building"></i> 发送成功';
                     }
@@ -668,7 +668,7 @@
                     
                     setTimeout(() => {
                         if (notificationType === 'dingtalk') {
-                            dingtalkBtn.innerHTML = '<i class="fab fa-paper-plane"></i> 发送钉钉通知';
+                            dingtalkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送钉钉通知';
                             dingtalkBtn.disabled = false;
                         } else {
                             wecomBtn.innerHTML = '<i class="fas fa-building"></i> 发送企微通知';
@@ -680,14 +680,14 @@
                     showStatusMessage(`发送失败: ${data.error || '未知错误'}`, false);
                     
                     if (notificationType === 'dingtalk') {
-                        dingtalkBtn.innerHTML = '<i class="fab fa-paper-plane"></i> 发送失败';
+                        dingtalkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送失败';
                     } else {
                         wecomBtn.innerHTML = '<i class="fas fa-building"></i> 发送失败';
                     }
                     
                     setTimeout(() => {
                         if (notificationType === 'dingtalk') {
-                            dingtalkBtn.innerHTML = '<i class="fab fa-paper-plane"></i> 发送钉钉通知';
+                            dingtalkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送钉钉通知';
                             dingtalkBtn.disabled = false;
                         } else {
                             wecomBtn.innerHTML = '<i class="fas fa-building"></i> 发送企微通知';
@@ -700,14 +700,14 @@
                 showStatusMessage('发送通知失败，请检查网络连接', false);
                 
                 if (notificationType === 'dingtalk') {
-                    dingtalkBtn.innerHTML = '<i class="fab fa-paper-plane"></i> 发送失败';
+                    dingtalkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送失败';
                 } else {
                     wecomBtn.innerHTML = '<i class="fas fa-building"></i> 发送失败';
                 }
                 
                 setTimeout(() => {
                     if (notificationType === 'dingtalk') {
-                        dingtalkBtn.innerHTML = '<i class="fab fa-paper-plane"></i> 发送钉钉通知';
+                        dingtalkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送钉钉通知';
                         dingtalkBtn.disabled = false;
                     } else {
                         wecomBtn.innerHTML = '<i class="fas fa-building"></i> 发送企微通知';
@@ -766,7 +766,7 @@
                     
                     <div class="notification-buttons">
                         <button id="dingtalkNotifyBtn" class="btn dingtalk-btn">
-                            <i class="fab fa-paper-plane"></i>
+                            <i class="fas fa-paper-plane"></i>
                             发送钉钉通知
                         </button>
                         <button id="wecomNotifyBtn" class="btn wecom-btn">
